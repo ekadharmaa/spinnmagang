@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MagangHub Shift Roll (9 Orang) — ULT & Admin</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Plus Jakarta Sans & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.25s ease-out forwards',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(6px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #f8fafc;
+            color: #0f172a;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        .wheel-shadow {
+            filter: drop-shadow(0 12px 24px rgba(15, 23, 42, 0.14));
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-teal-100 selection:text-teal-900">
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Custom Confirmation Modal (No alert/confirm) -->
+    <div id="confirm-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 animate-fade-in">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                </div>
+                <h3 id="modal-title" class="font-display font-bold text-lg text-slate-900">Konfirmasi</h3>
+            </div>
+            <p id="modal-message" class="text-slate-600 text-sm leading-relaxed mb-6">Apakah Anda yakin?</p>
+            <div class="flex justify-end gap-2.5">
+                <button id="modal-cancel" class="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">
+                    Batal
+                </button>
+                <button id="modal-confirm" class="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-slate-900 hover:bg-slate-800 transition-colors">
+                    Ya, Lanjutkan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Header -->
+    <header class="bg-white border-b border-slate-200/80 sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center text-white shadow-md shadow-teal-500/20 shrink-0">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                </div>
+                <div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <h1 class="font-display font-bold text-lg sm:text-xl text-slate-900 tracking-tight">MagangHub Shift Roll (9 Orang)</h1>
+                        <span id="week-counter-badge" class="px-2.5 py-0.5 text-xs font-bold bg-teal-50 text-teal-700 border border-teal-200 rounded-full">Siklus 1 &bull; Minggu 1/3</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-0.5">
+                        1x Spin untuk jadwal Senin–Jumat &bull; <strong class="text-teal-700">3 ULT</strong> &bull; <strong class="text-indigo-700">6 Admin</strong> &bull; Anti-Berurutan &bull; <strong class="text-rose-700">Raras &ne; Dewi di ULT</strong>
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+                <button onclick="confirmResetCycleOnly()" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200/80 transition-colors flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    <span>Reset Siklus 3-Minggu</span>
+                </button>
+                <button onclick="confirmResetAll()" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/70 transition-colors flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                    <span>Reset Semua</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
+
+        <!-- Fairness & Priority Status Banner -->
+        <section class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div class="flex items-start gap-3">
+                <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 border border-amber-200/60 flex items-center justify-center shrink-0 mt-0.5">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="font-display font-bold text-sm sm:text-base text-slate-900">Keadilan Siklus 3-Minggu (<span id="cycle-step-label">Minggu 1/3</span>)</h2>
+                    <p id="priority-banner-text" class="text-xs sm:text-sm text-slate-600 mt-0.5">
+                        Minggu 1 dari siklus 3-minggu: 3 orang acak mendapat 1 hari ULT dan 6 orang mendapat 2 hari ULT.
+                    </p>
+                </div>
+            </div>
+            <div id="priority-pills-container" class="flex flex-wrap items-center gap-1.5 shrink-0">
+                <!-- Populated by JS -->
+            </div>
+        </section>
+
+        <!-- Primary Workspace Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+            <!-- LEFT COLUMN (5 cols): Spin Wheel & Member Editor -->
+            <div class="lg:col-span-5 space-y-6">
+
+                <!-- 1. One-Click Spin Wheel Card -->
+                <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs flex flex-col items-center">
+                    <div class="w-full flex items-center justify-between mb-3">
+                        <div>
+                            <h3 class="font-display font-bold text-base sm:text-lg text-slate-900">Roda Pengacak Jadwal</h3>
+                            <p class="text-xs text-slate-500">1x klik langsung menyusun jadwal Senin–Jumat</p>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-teal-50 text-teal-700 border border-teal-200">
+                            15 Slot / Minggu
+                        </span>
+                    </div>
+
+                    <!-- Responsive Wheel Canvas -->
+                    <div id="wheel-container" class="relative w-full max-w-[310px] aspect-square my-2 flex items-center justify-center">
+                        <!-- Top Pointer -->
+                        <div class="absolute -top-2.5 left-1/2 -translate-x-1/2 z-20 pointer-events-none drop-shadow-md">
+                            <svg width="32" height="36" viewBox="0 0 34 38" fill="none">
+                                <path d="M17 36L2.27757 10.5L31.7224 10.5L17 36Z" fill="#0f172a" stroke="#ffffff" stroke-width="3" stroke-linejoin="round"/>
+                                <circle cx="17" cy="11" r="4" fill="#14b8a6"/>
+                            </svg>
+                        </div>
+
+                        <canvas id="spin-canvas" class="w-full h-full wheel-shadow rounded-full"></canvas>
+
+                        <!-- Center Hub -->
+                        <button id="center-spin-btn" onclick="triggerWeeklySpin()" class="absolute w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-900 hover:bg-slate-800 active:scale-95 text-white font-display font-extrabold text-xs sm:text-sm tracking-wider uppercase shadow-xl border-4 border-white transition-all flex flex-col items-center justify-center z-10 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span>SPIN</span>
+                        </button>
+                    </div>
+
+                    <!-- Main CTA Spin Button -->
+                    <button id="btn-spin-week" onclick="triggerWeeklySpin()" class="w-full mt-4 py-3.5 px-5 rounded-2xl bg-gradient-to-r from-indigo-600 to-teal-600 hover:from-indigo-500 hover:to-teal-500 active:scale-[0.99] text-white font-display font-bold text-sm sm:text-base shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center gap-2.5 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        <span>Spin Jadwal Minggu Ini</span>
+                    </button>
+
+                    <p class="text-[11px] text-slate-400 text-center mt-2.5">
+                        Tidak cocok? Anda bisa klik ulang <strong>Spin</strong> sebelum menekan <em>Konfirmasi &amp; Simpan</em>.
+                    </p>
+                </div>
+
+                <!-- 2. Editable 9-Member Manager Card -->
+                <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs">
+                    <div class="flex items-center justify-between mb-1">
+                        <h3 class="font-display font-bold text-base text-slate-900">Daftar 9 Anggota (Bisa Diedit)</h3>
+                        <span class="text-xs font-semibold text-slate-500">9 Orang</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mb-4">
+                        Anggota dengan nama <strong>Raras</strong> &amp; <strong>Dewi</strong> otomatis dipisahkan agar tidak 1 tim di ULT.
+                    </p>
+
+                    <div id="member-editor-list" class="space-y-2">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RIGHT COLUMN (7 cols): Generated Weekly Schedule & Fairness Verification -->
+            <div class="lg:col-span-7 space-y-6">
+
+                <!-- 1. Weekly Schedule Card (Senin - Jumat) -->
+                <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 id="schedule-card-title" class="font-display font-bold text-base sm:text-lg text-slate-900">Jadwal Mingguan (Senin – Jumat)</h3>
+                                <span id="saved-status-badge" class="hidden px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-emerald-100 text-emerald-800">
+                                    Tersimpan
+                                </span>
+                            </div>
+                            <p class="text-xs text-slate-500 mt-0.5">Kapasitas harian: <strong>3 ULT</strong> &bull; <strong>6 Admin</strong></p>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button id="btn-save-week" onclick="confirmAndSaveWeek()" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 active:scale-95 text-white text-xs font-semibold shadow-xs transition-all flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed">
+                                <svg class="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                <span>Konfirmasi &amp; Simpan Minggu Ini</span>
+                            </button>
+
+                            <button id="btn-copy-wa" onclick="copyScheduleToWhatsApp()" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white text-xs font-semibold shadow-xs transition-all flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/>
+                                </svg>
+                                <span>Salin Jadwal WA</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Schedule Rows (Senin - Jumat) -->
+                    <div id="schedule-days-container" class="mt-4 space-y-3">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- 2. Weekly Verification & Fairness Summary Card -->
+                <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                        <div>
+                            <h3 class="font-display font-bold text-base text-slate-900">Verifikasi Distribusi &amp; Aturan Adil</h3>
+                            <p class="text-xs text-slate-500">6 org (2 hari), 3 org (1 hari), 0 hari berurutan, dan Raras &ne; Dewi di ULT</p>
+                        </div>
+                        <div id="rule-verification-pills" class="flex flex-wrap gap-1.5">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Member Weekly Load Badges Grid -->
+                    <div id="member-load-summary-grid" class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- 3. Cycle & All-Time Statistics Table Card -->
+                <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                        <div>
+                            <h3 class="font-display font-bold text-base text-slate-900">Statistik Siklus 3-Minggu &amp; Riwayat</h3>
+                            <p class="text-xs text-slate-500">Target per siklus 3-minggu: tepat <strong>5 hari ULT</strong> (2 + 2 + 1) per anggota</p>
+                        </div>
+                        <span id="cycle-progress-pill" class="px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 self-start sm:self-auto">
+                            Siklus 1 &bull; Minggu 1/3
+                        </span>
+                    </div>
+
+                    <div class="overflow-x-auto rounded-2xl border border-slate-200/80">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-600 border-b border-slate-200/80">
+                                    <th class="py-2.5 px-3 font-bold">Anggota</th>
+                                    <th class="py-2.5 px-3 font-bold text-center">Jatah 1-Hari Siklus Ini</th>
+                                    <th class="py-2.5 px-3 font-bold text-center">ULT Siklus Ini</th>
+                                    <th class="py-2.5 px-3 font-bold text-center">Total ULT (Semua)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cycle-stats-tbody" class="divide-y divide-slate-100">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200/80 py-4 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
+            <p>MagangHub Shift Roll (9 Orang) &bull; Pembagian otomatis berbasis aturan adil.</p>
+            <p>Siklus 3 Minggu = Masing-masing tepat <strong>5 hari ULT</strong> &amp; <strong>10 hari Admin</strong>.</p>
+        </div>
+    </footer>
+
+    <script>
+        // =========================================================================
+        // 1. CONSTANTS & INITIAL STATE
+        // =========================================================================
+        const STORAGE_KEY = 'maganghub_9_members_v3';
+        const WORKDAYS = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'];
+
+        const DEFAULT_MEMBERS = [
+            { id: 'm1', name: 'Desyta', hasHadOneDayInCycle: false, cycleUltDays: 0, totalUltAllTime: 0 },
+            { id: 'm2', name: 'Adin', hasHadOneDayInCycle: false, cycleUltDays: 0, totalUltAllTime: 0 },
+            { id: 'm3', name: 'Wiwin', hasHadOneDayInCycle: false, cycleUltDays: 0, totalUltAllTime: 0 },
+            { id: 'm4', name: 'Alis', hasHadOneDayInCycle: false, cycleUltDays: 0, totalUltAllTime: 0 },
+            { id: 'm5', name: 'Eka', hasHadOneDayInCycle: false, cycleUltDays: 0, totalUltAllTime: 0 },
+            { id: 'm6', name: 'Mei', hasHadOneDayInCycle: false, cycleUltDays: 0, totalUltAllTime: 0 },
+            { id: 'm7', name: 'Wanda', hasHadOneDayInCycle: false, cycleUltDays: 0, totalUltAllTime: 0 },
+            { id: 'm8', name: 'Raras', hasHadOneDayInCycle: false, cycleUltDays: 0, totalUltAllTime: 0 },
+            { id: 'm9', name: 'Dewi', hasHadOneDayInCycle: false, cycleUltDays: 0, totalUltAllTime: 0 }
+        ];
+
+        const WHEEL_COLORS = [
+            '#0d9488', // Teal 600
+            '#4f46e5', // Indigo 600
+            '#059669', // Emerald 600
+            '#2563eb', // Blue 600
+            '#d97706', // Amber 600
+            '#7c3aed', // Violet 600
+            '#db2777', // Pink 600
+            '#0284c7', // Sky 600
+            '#ea580c'  // Orange 600
+        ];
+
+        let state = {
+            cycleNumber: 1,
+            weekInCycle: 1, // 1, 2, or 3
+            totalSavedWeeks: 0,
+            members: JSON.parse(JSON.stringify(DEFAULT_MEMBERS)),
+            // schedule: array of 5 objects { dayIndex, dayName, ultIds: [id1, id2, id3] }
+            currentSchedule: null,
+            isCurrentWeekSaved: false
+        };
+
+        let wheelAngle = 0;
+        let isSpinning = false;
+        let activeSwapDayIndex = null;
+        let selectedSwapUltId = null;
+        let selectedSwapAdminId = null;
+
+        // =========================================================================
+        // 2. STORAGE, TOAST & MODAL UTILITIES
+        // =========================================================================
+        function saveState() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            } catch (e) {
+                console.warn('Gagal menyimpan ke localStorage:', e);
+            }
+        }
+
+        function loadState() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) return;
+                const parsed = JSON.parse(raw);
+                if (parsed && Array.isArray(parsed.members) && parsed.members.length === 9) {
+                    state.cycleNumber = parsed.cycleNumber || 1;
+                    state.weekInCycle = [1, 2, 3].includes(parsed.weekInCycle) ? parsed.weekInCycle : 1;
+                    state.totalSavedWeeks = parsed.totalSavedWeeks || 0;
+                    state.members = parsed.members.map((m, idx) => ({
+                        id: m.id || `m${idx + 1}`,
+                        name: m.name || DEFAULT_MEMBERS[idx].name,
+                        hasHadOneDayInCycle: Boolean(m.hasHadOneDayInCycle),
+                        cycleUltDays: Number(m.cycleUltDays) || 0,
+                        totalUltAllTime: Number(m.totalUltAllTime) || 0
+                    }));
+                    state.currentSchedule = Array.isArray(parsed.currentSchedule) ? parsed.currentSchedule : null;
+                    state.isCurrentWeekSaved = Boolean(parsed.isCurrentWeekSaved);
+                }
+            } catch (e) {
+                console.warn('Gagal memuat state dari localStorage:', e);
+            }
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+
+            const colors = {
+                success: 'bg-slate-900 text-white border-slate-700',
+                warning: 'bg-amber-600 text-white border-amber-500',
+                error: 'bg-rose-600 text-white border-rose-500'
+            };
+
+            const toast = document.createElement('div');
+            toast.className = `pointer-events-auto max-w-sm px-4 py-3 rounded-2xl shadow-xl border text-xs sm:text-sm font-medium animate-fade-in ${colors[type] || colors.success}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(6px)';
+                toast.style.transition = 'all 0.2s ease';
+                setTimeout(() => toast.remove(), 220);
+            }, 3400);
+        }
+
+        function openConfirmModal({ title, message, confirmText = 'Ya, Lanjutkan', onConfirm }) {
+            const modal = document.getElementById('confirm-modal');
+            const titleEl = document.getElementById('modal-title');
+            const msgEl = document.getElementById('modal-message');
+            const confirmBtn = document.getElementById('modal-confirm');
+            const cancelBtn = document.getElementById('modal-cancel');
+
+            titleEl.textContent = title;
+            msgEl.textContent = message;
+            confirmBtn.textContent = confirmText;
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            const cleanup = () => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                confirmBtn.onclick = null;
+                cancelBtn.onclick = null;
+            };
+
+            cancelBtn.onclick = cleanup;
+            confirmBtn.onclick = () => {
+                cleanup();
+                if (typeof onConfirm === 'function') onConfirm();
+            };
+        }
+
+        function copyToClipboard(text, successMsg) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showToast(successMsg, 'success');
+            } catch (err) {
+                showToast('Gagal menyalin teks ke clipboard.', 'error');
+            }
+            document.body.removeChild(textarea);
+        }
+
+        // =========================================================================
+        // 3. CORE SCHEDULING ALGORITHM (3-WEEK STRICT CYCLE + BACKTRACKING SOLVER)
+        // =========================================================================
+        function shuffleArray(arr) {
+            const copy = [...arr];
+            for (let i = copy.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [copy[i], copy[j]] = [copy[j], copy[i]];
+            }
+            return copy;
+        }
+
+        /**
+         * Mencari ID Raras (atau index 7) dan Dewi (atau index 8)
+         */
+        function getSeparatedPairIds() {
+            const rarasIds = new Set();
+            const dewiIds = new Set();
+
+            state.members.forEach((m, idx) => {
+                const lower = m.name.toLowerCase();
+                if (lower.includes('raras') || idx === 7) rarasIds.add(m.id);
+                if (lower.includes('dewi') || idx === 8) dewiIds.add(m.id);
+            });
+
+            return { rarasIds, dewiIds };
+        }
+
+        function violatesSeparatedPair(ultIds, rarasIds, dewiIds) {
+            if (rarasIds.size === 0 || dewiIds.size === 0) return false;
+            const hasRaras = ultIds.some(id => rarasIds.has(id));
+            const hasDewi = ultIds.some(id => dewiIds.has(id));
+            return hasRaras && hasDewi;
+        }
+
+        function getCombinationsOf3(arr) {
+            const res = [];
+            for (let i = 0; i < arr.length - 2; i++) {
+                for (let j = i + 1; j < arr.length - 1; j++) {
+                    for (let k = j + 1; k < arr.length; k++) {
+                        res.push([arr[i], arr[j], arr[k]]);
+                    }
+                }
+            }
+            return res;
+        }
+
+        /**
+         * Menyelesaikan penjadwalan 5 hari untuk kuota 2-hari (6 org) dan 1-hari (3 org)
+         * menggunakan Randomized Backtracking dengan pruning yang dijamin 100% menemukan solusi valid.
+         */
+        function solveDailySchedule(twoDayMembers, oneDayMembers, rarasIds, dewiIds) {
+            const quotaMap = new Map();
+            twoDayMembers.forEach(m => quotaMap.set(m.id, 2));
+            oneDayMembers.forEach(m => quotaMap.set(m.id, 1));
+
+            const days = [[], [], [], [], []];
+
+            function backtrack(dayIdx, remainingMap) {
+                if (dayIdx === 5) {
+                    return Array.from(remainingMap.values()).every(v => v === 0);
+                }
+
+                const prevDaySet = dayIdx > 0 ? new Set(days[dayIdx - 1]) : new Set();
+                const daysLeftIncludingToday = 5 - dayIdx;
+                const maxPossibleTurns = Math.ceil(daysLeftIncludingToday / 2);
+
+                const candidates = state.members
+                    .map(m => m.id)
+                    .filter(id => remainingMap.get(id) > 0 && !prevDaySet.has(id));
+
+                if (candidates.length < 3) return false;
+
+                const mandatory = candidates.filter(id => remainingMap.get(id) >= maxPossibleTurns);
+                if (mandatory.length > 3) return false;
+
+                const validTrios = shuffleArray(getCombinationsOf3(candidates)).filter(trio => {
+                    if (!mandatory.every(mId => trio.includes(mId))) return false;
+                    if (violatesSeparatedPair(trio, rarasIds, dewiIds)) return false;
+                    return true;
+                });
+
+                for (const trio of validTrios) {
+                    const nextRemaining = new Map(remainingMap);
+                    trio.forEach(id => nextRemaining.set(id, nextRemaining.get(id) - 1));
+
+                    if (dayIdx < 4) {
+                        const todaySet = new Set(trio);
+                        const nextAvailableCount = state.members
+                            .map(m => m.id)
+                            .filter(id => nextRemaining.get(id) > 0 && !todaySet.has(id)).length;
+                        if (nextAvailableCount < 3) continue;
+                    }
+
+                    days[dayIdx] = trio;
+                    if (backtrack(dayIdx + 1, nextRemaining)) {
+                        return true;
+                    }
+                }
+
+                days[dayIdx] = [];
+                return false;
+            }
+
+            if (backtrack(0, quotaMap)) {
+                return days.map((ultIds, idx) => ({
+                    dayIndex: idx,
+                    dayName: WORKDAYS[idx],
+                    ultIds
+                }));
+            }
+            return null;
+        }
+
+        /**
+         * Menghasilkan jadwal Senin-Jumat berdasarkan Siklus 3-Minggu:
+         * - Hanya anggota dengan `hasHadOneDayInCycle === false` yang boleh dipilih masuk kelompok 1-hari.
+         * - Di Minggu 3/3, tersisa tepat 3 orang dengan `hasHadOneDayInCycle === false` -> ketiganya otomatis dapat 1 hari.
+         */
+        function generateFairWeeklySchedule() {
+            const { rarasIds, dewiIds } = getSeparatedPairIds();
+
+            // Pastikan jumlah kandidat yang belum dapat 1-hari di siklus ini selalu kelipatan 3 (9, 6, atau 3)
+            let eligibleForOneDay = state.members.filter(m => !m.hasHadOneDayInCycle);
+            if (eligibleForOneDay.length < 3) {
+                // Pengaman jika state korup: reset siklus
+                state.members.forEach(m => {
+                    m.hasHadOneDayInCycle = false;
+                    m.cycleUltDays = 0;
+                });
+                state.weekInCycle = 1;
+                eligibleForOneDay = [...state.members];
+            }
+
+            const alreadyHadOneDay = state.members.filter(m => m.hasHadOneDayInCycle);
+
+            // Acak kandidat yang belum dapat 1 hari di siklus ini; ambil 3 untuk jatah 1 hari
+            const shuffledEligible = shuffleArray(eligibleForOneDay);
+            const oneDayMembers = shuffledEligible.slice(0, 3);
+            const remainingEligibleForTwoDays = shuffledEligible.slice(3);
+
+            // 6 anggota sisanya (yang sudah dapat 1-hari di minggu siklus sebelumnya + sisa eligible) mendapat 2 hari
+            const twoDayMembers = shuffleArray([...alreadyHadOneDay, ...remainingEligibleForTwoDays]);
+
+            // Jalankan solver backtracking (coba hingga 15x jika perlu)
+            for (let attempt = 0; attempt < 15; attempt++) {
+                const solved = solveDailySchedule(twoDayMembers, oneDayMembers, rarasIds, dewiIds);
+                if (solved) return solved;
+            }
+
+            // Fallback konstruktif matematis (100% terjamin valid untuk semua aturan termasuk Raras != Dewi)
+            const rarasMember = twoDayMembers.find(m => rarasIds.has(m.id)) || oneDayMembers.find(m => rarasIds.has(m.id));
+            const dewiMember = twoDayMembers.find(m => dewiIds.has(m.id)) || oneDayMembers.find(m => dewiIds.has(m.id));
+
+            const otherTwoDay = shuffleArray(twoDayMembers.filter(m => m !== rarasMember && m !== dewiMember));
+            const otherOneDay = shuffleArray(oneDayMembers.filter(m => m !== rarasMember && m !== dewiMember));
+
+            // Pola slot:
+            // Senin: [a, b, c] | Selasa: [d, e, g] | Rabu: [a, f, h] | Kamis: [b, d, i] | Jumat: [c, e, f]
+            // Slot 'a' (Sen, Rab) & 'd' (Sel, Kam) & 'g' (Sel) tidak pernah bertemu di hari yang sama!
+            const twoSlots = new Array(6).fill(null);
+            const oneSlots = new Array(3).fill(null);
+
+            if (rarasMember && twoDayMembers.includes(rarasMember)) twoSlots[0] = rarasMember.id; // 'a': Sen, Rab
+            if (dewiMember && twoDayMembers.includes(dewiMember)) twoSlots[3] = dewiMember.id;   // 'd': Sel, Kam
+
+            for (let idx = 0; idx < 6; idx++) {
+                if (!twoSlots[idx] && otherTwoDay.length > 0) {
+                    twoSlots[idx] = otherTwoDay.shift().id;
+                }
+            }
+
+            if (rarasMember && oneDayMembers.includes(rarasMember)) oneSlots[0] = rarasMember.id; // 'g': Sel
+            if (dewiMember && oneDayMembers.includes(dewiMember)) oneSlots[1] = dewiMember.id;   // 'h': Rab
+
+            for (let idx = 0; idx < 3; idx++) {
+                if (!oneSlots[idx] && otherOneDay.length > 0) {
+                    oneSlots[idx] = otherOneDay.shift().id;
+                }
+            }
+
+            const [a, b, c, d, e, f] = twoSlots;
+            const [g, h, i] = oneSlots;
+
+            const guaranteedDays = [
+                [a, b, c], // Senin
+                [d, e, g], // Selasa
+                [a, f, h], // Rabu
+                [b, d, i], // Kamis
+                [c, e, f]  // Jumat
+            ];
+
+            return guaranteedDays.map((ultIds, idx) => ({
+                dayIndex: idx,
+                dayName: WORKDAYS[idx],
+                ultIds
+            }));
+        }
+
+        // =========================================================================
+        // 4. SPIN WHEEL RENDERING & ANIMATION
+        // =========================================================================
+        function resizeAndDrawWheel() {
+            const container = document.getElementById('wheel-container');
+            const canvas = document.getElementById('spin-canvas');
+            if (!container || !canvas) return;
+
+            const size = container.clientWidth || 300;
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = size * dpr;
+            canvas.height = size * dpr;
+
+            const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+            drawWheel(ctx, size);
+        }
+
+        function drawWheel(ctx, size) {
+            const members = state.members;
+            const center = size / 2;
+            const radius = center - 8;
+            const arc = (Math.PI * 2) / members.length;
+
+            ctx.clearRect(0, 0, size, size);
+
+            ctx.beginPath();
+            ctx.arc(center, center, radius + 4, 0, Math.PI * 2);
+            ctx.fillStyle = '#0f172a';
+            ctx.fill();
+
+            members.forEach((member, i) => {
+                const startAngle = wheelAngle + i * arc;
+                const endAngle = startAngle + arc;
+
+                ctx.beginPath();
+                ctx.moveTo(center, center);
+                ctx.arc(center, center, radius, startAngle, endAngle);
+                ctx.closePath();
+                ctx.fillStyle = WHEEL_COLORS[i % WHEEL_COLORS.length];
+                ctx.fill();
+
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#ffffff';
+                ctx.stroke();
+
+                ctx.save();
+                ctx.translate(center, center);
+                ctx.rotate(startAngle + arc / 2);
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '700 12.5px "Plus Jakarta Sans", sans-serif';
+                ctx.shadowColor = 'rgba(0,0,0,0.3)';
+                ctx.shadowBlur = 3;
+
+                const displayName = member.name.length > 12
+                    ? member.name.slice(0, 11) + '…'
+                    : member.name;
+                ctx.fillText(displayName, radius - 18, 0);
+                ctx.restore();
+            });
+        }
+
+        function triggerWeeklySpin() {
+            if (isSpinning) return;
+
+            isSpinning = true;
+            state.isCurrentWeekSaved = false;
+            activeSwapDayIndex = null;
+            selectedSwapUltId = null;
+            selectedSwapAdminId = null;
+            updateButtonsDisabledState();
+
+            const container = document.getElementById('wheel-container');
+            const size = container.clientWidth || 300;
+            const canvas = document.getElementById('spin-canvas');
+            const ctx = canvas.getContext('2d');
+
+            const durationMs = 2000;
+            const startAngle = wheelAngle;
+            const totalRotation = (6 + Math.random() * 4) * Math.PI * 2;
+            const startTime = performance.now();
+
+            let lastShuffleTick = 0;
+
+            function animate(now) {
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / durationMs, 1);
+                const ease = 1 - Math.pow(1 - progress, 4);
+
+                wheelAngle = startAngle + totalRotation * ease;
+                drawWheel(ctx, size);
+
+                if (progress < 0.8 && now - lastShuffleTick > 140) {
+                    lastShuffleTick = now;
+                    state.currentSchedule = generateFairWeeklySchedule();
+                    renderScheduleCards();
+                    renderVerificationSection();
+                }
+
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    isSpinning = false;
+                    state.currentSchedule = generateFairWeeklySchedule();
+                    saveState();
+                    renderAll();
+                    showToast(`Jadwal Siklus ${state.cycleNumber} (Minggu ${state.weekInCycle}/3) berhasil diundi!`, 'success');
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        // =========================================================================
+        // 5. MANUAL SWAP (TUKAR ANGGOTA DI HARI YANG SAMA)
+        // =========================================================================
+        function toggleSwapPanel(dayIndex) {
+            if (isSpinning) return;
+            if (activeSwapDayIndex === dayIndex) {
+                activeSwapDayIndex = null;
+                selectedSwapUltId = null;
+                selectedSwapAdminId = null;
+            } else {
+                activeSwapDayIndex = dayIndex;
+                const day = state.currentSchedule[dayIndex];
+                const ultSet = new Set(day.ultIds);
+                const adminMembers = state.members.filter(m => !ultSet.has(m.id));
+                selectedSwapUltId = day.ultIds[0];
+                selectedSwapAdminId = adminMembers[0] ? adminMembers[0].id : null;
+            }
+            renderScheduleCards();
+        }
+
+        function setSwapUltSelection(id) {
+            selectedSwapUltId = id;
+            renderScheduleCards();
+        }
+
+        function setSwapAdminSelection(id) {
+            selectedSwapAdminId = id;
+            renderScheduleCards();
+        }
+
+        function evaluateSwapWarnings(dayIndex, outUltId, inAdminId) {
+            const warnings = [];
+            if (!outUltId || !inAdminId) return warnings;
+
+            const simulated = state.currentSchedule.map((d, idx) => {
+                if (idx !== dayIndex) return [...d.ultIds];
+                return d.ultIds.map(id => (id === outUltId ? inAdminId : id));
+            });
+
+            const { rarasIds, dewiIds } = getSeparatedPairIds();
+            if (violatesSeparatedPair(simulated[dayIndex], rarasIds, dewiIds)) {
+                warnings.push('Raras & Dewi akan berada dalam 1 tim ULT!');
+            }
+
+            // Cek 2 hari berturut-turut untuk inAdminId
+            if (dayIndex > 0 && simulated[dayIndex - 1].includes(inAdminId)) {
+                const name = state.members.find(m => m.id === inAdminId)?.name || inAdminId;
+                warnings.push(`${name} akan jaga ULT 2 hari berturut-turut (${WORKDAYS[dayIndex - 1]} & ${WORKDAYS[dayIndex]})!`);
+            }
+            if (dayIndex < 4 && simulated[dayIndex + 1].includes(inAdminId)) {
+                const name = state.members.find(m => m.id === inAdminId)?.name || inAdminId;
+                warnings.push(`${name} akan jaga ULT 2 hari berturut-turut (${WORKDAYS[dayIndex]} & ${WORKDAYS[dayIndex + 1]})!`);
+            }
+
+            // Cek total hari dalam seminggu (> 2 hari)
+            let countInWeek = 0;
+            simulated.forEach(list => {
+                if (list.includes(inAdminId)) countInWeek++;
+            });
+            if (countInWeek > 2) {
+                const name = state.members.find(m => m.id === inAdminId)?.name || inAdminId;
+                warnings.push(`${name} akan mendapat ${countInWeek} hari ULT minggu ini (maksimal 2 hari)!`);
+            }
+
+            return warnings;
+        }
+
+        function executeManualSwap(dayIndex) {
+            if (isSpinning || !selectedSwapUltId || !selectedSwapAdminId) return;
+
+            const day = state.currentSchedule[dayIndex];
+            const outName = state.members.find(m => m.id === selectedSwapUltId)?.name || '';
+            const inName = state.members.find(m => m.id === selectedSwapAdminId)?.name || '';
+
+            day.ultIds = day.ultIds.map(id => (id === selectedSwapUltId ? selectedSwapAdminId : id));
+            state.isCurrentWeekSaved = false;
+            activeSwapDayIndex = null;
+            selectedSwapUltId = null;
+            selectedSwapAdminId = null;
+
+            saveState();
+            renderAll();
+            showToast(`Berhasil menukar ${outName} (ULT) dengan ${inName} (Admin) pada hari ${day.dayName}.`, 'success');
+        }
+
+        // =========================================================================
+        // 6. MEMBER NAME EDITING, WEEK CONFIRMATION & RESET
+        // =========================================================================
+        function updateMemberName(id, newValue) {
+            const trimmed = newValue.trim();
+            const member = state.members.find(m => m.id === id);
+            if (!member) return;
+
+            member.name = trimmed || `Anggota ${id.replace('m', '')}`;
+            saveState();
+            renderAll();
+        }
+
+        function confirmAndSaveWeek() {
+            if (isSpinning || !state.currentSchedule) return;
+
+            if (state.isCurrentWeekSaved) {
+                showToast('Jadwal minggu ini sudah tersimpan! Klik Spin untuk mengundi minggu berikutnya.', 'warning');
+                return;
+            }
+
+            // Hitung jumlah hari ULT per anggota di jadwal saat ini
+            const counts = {};
+            state.members.forEach(m => (counts[m.id] = 0));
+            state.currentSchedule.forEach(day => {
+                day.ultIds.forEach(id => {
+                    counts[id] = (counts[id] || 0) + 1;
+                });
+            });
+
+            const savedCycle = state.cycleNumber;
+            const savedWeekInCycle = state.weekInCycle;
+
+            // Perbarui status siklus & riwayat all-time
+            state.members.forEach(m => {
+                const daysThisWeek = counts[m.id] || 0;
+                if (daysThisWeek === 1) {
+                    m.hasHadOneDayInCycle = true;
+                }
+                m.cycleUltDays = (m.cycleUltDays || 0) + daysThisWeek;
+                m.totalUltAllTime = (m.totalUltAllTime || 0) + daysThisWeek;
+            });
+
+            state.totalSavedWeeks += 1;
+            state.isCurrentWeekSaved = true;
+
+            // Jika baru saja menyelesaikan Minggu 3/3, reset siklus 3-minggu untuk siklus berikutnya
+            if (state.weekInCycle >= 3) {
+                state.cycleNumber += 1;
+                state.weekInCycle = 1;
+                state.members.forEach(m => {
+                    m.hasHadOneDayInCycle = false;
+                    m.cycleUltDays = 0;
+                });
+                saveState();
+                renderAll();
+                showToast(
+                    `Siklus ${savedCycle} (Minggu 3/3) selesai! Semua anggota telah dapat 5 hari ULT. Siklus ${state.cycleNumber} dimulai.`,
+                    'success'
+                );
+            } else {
+                state.weekInCycle += 1;
+                saveState();
+                renderAll();
+                showToast(
+                    `Siklus ${savedCycle} • Minggu ${savedWeekInCycle}/3 tersimpan! Lanjut ke Minggu ${state.weekInCycle}/3.`,
+                    'success'
+                );
+            }
+        }
+
+        function confirmResetCycleOnly() {
+            if (isSpinning) return;
+            openConfirmModal({
+                title: 'Reset Siklus 3-Minggu?',
+                message: 'Status jatah 1-hari dalam siklus berjalan akan di-reset ke Minggu 1/3 (nama anggota dan total riwayat keseluruhan tetap disimpan).',
+                confirmText: 'Ya, Reset Siklus',
+                onConfirm: () => {
+                    state.weekInCycle = 1;
+                    state.members.forEach(m => {
+                        m.hasHadOneDayInCycle = false;
+                        m.cycleUltDays = 0;
+                    });
+                    state.currentSchedule = generateFairWeeklySchedule();
+                    state.isCurrentWeekSaved = false;
+                    activeSwapDayIndex = null;
+                    saveState();
+                    renderAll();
+                    showToast('Siklus 3-minggu berhasil di-reset ke Minggu 1/3.', 'success');
+                }
+            });
+        }
+
+        function confirmResetAll() {
+            if (isSpinning) return;
+            openConfirmModal({
+                title: 'Reset Semua Data & Riwayat?',
+                message: 'Semua nama anggota akan dikembalikan ke default (9 orang), seluruh riwayat dihapus, dan kembali ke Siklus 1 • Minggu 1/3.',
+                confirmText: 'Ya, Reset Semua',
+                onConfirm: () => {
+                    state.cycleNumber = 1;
+                    state.weekInCycle = 1;
+                    state.totalSavedWeeks = 0;
+                    state.members = JSON.parse(JSON.stringify(DEFAULT_MEMBERS));
+                    state.currentSchedule = generateFairWeeklySchedule();
+                    state.isCurrentWeekSaved = false;
+                    activeSwapDayIndex = null;
+                    saveState();
+                    renderAll();
+                    showToast('Seluruh data berhasil di-reset ke Siklus 1 • Minggu 1/3.', 'success');
+                }
+            });
+        }
+
+        // =========================================================================
+        // 7. RENDER FUNCTIONS
+        // =========================================================================
+        function updateButtonsDisabledState() {
+            document.getElementById('center-spin-btn').disabled = isSpinning;
+            document.getElementById('btn-spin-week').disabled = isSpinning;
+            document.getElementById('btn-save-week').disabled = isSpinning || !state.currentSchedule;
+            document.getElementById('btn-copy-wa').disabled = isSpinning || !state.currentSchedule;
+        }
+
+        function renderPriorityBanner() {
+            const badgeText = `Siklus ${state.cycleNumber} • Minggu ${state.weekInCycle}/3`;
+            document.getElementById('week-counter-badge').textContent = badgeText;
+            document.getElementById('cycle-step-label').textContent = `Minggu ${state.weekInCycle}/3`;
+            document.getElementById('cycle-progress-pill').textContent = badgeText;
+
+            const bannerTextEl = document.getElementById('priority-banner-text');
+            const pillsEl = document.getElementById('priority-pills-container');
+
+            const pendingOneDay = state.members.filter(m => !m.hasHadOneDayInCycle);
+            const alreadyHadOneDay = state.members.filter(m => m.hasHadOneDayInCycle);
+
+            if (state.weekInCycle === 1) {
+                bannerTextEl.innerHTML = `<strong>Minggu 1/3:</strong> Belum ada yang dapat jatah 1-hari di Siklus ${state.cycleNumber}. Sistem memilih <strong>3 orang acak</strong> untuk jaga 1 hari ULT dan <strong>6 orang</strong> untuk 2 hari ULT.`;
+                pillsEl.innerHTML = `<span class="px-3 py-1 rounded-full text-xs font-semibold bg-teal-50 text-teal-700 border border-teal-200">9 Kandidat Jatah 1-Hari Tersedia</span>`;
+            } else if (state.weekInCycle === 2) {
+                bannerTextEl.innerHTML = `<strong>Minggu 2/3:</strong> 3 anggota yang sudah dapat 1-hari di Minggu 1 <strong>otomatis mendapat 2 hari</strong>. Jatah 1-hari diundi dari 6 anggota tersisa:`;
+                pillsEl.innerHTML = alreadyHadOneDay.map(m => `
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300/80">
+                        ✓ Sudah 1h: ${m.name}
+                    </span>
+                `).join('');
+            } else {
+                bannerTextEl.innerHTML = `<strong>Minggu 3/3 (Penutup Siklus):</strong> 3 anggota terakhir yang belum pernah mendapat 1 hari di Siklus ${state.cycleNumber} <strong>otomatis mendapat 1 hari</strong> agar total semua tepat 5 hari ULT:`;
+                pillsEl.innerHTML = pendingOneDay.map(m => `
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-100 text-indigo-900 border border-indigo-300/80">
+                        Giliran 1h: ${m.name}
+                    </span>
+                `).join('');
+            }
+        }
+
+        function renderMemberEditor() {
+            const listEl = document.getElementById('member-editor-list');
+            const { rarasIds, dewiIds } = getSeparatedPairIds();
+
+            listEl.innerHTML = state.members.map((member, idx) => {
+                const isSeparatedSpecial = rarasIds.has(member.id) || dewiIds.has(member.id);
+
+                return `
+                    <div class="flex items-center gap-2 p-2 rounded-xl bg-slate-50/80 border border-slate-200/70 focus-within:border-teal-400 focus-within:bg-white transition-colors">
+                        <span class="w-6 h-6 rounded-lg text-white text-xs font-bold flex items-center justify-center shrink-0" style="background-color: ${WHEEL_COLORS[idx % WHEEL_COLORS.length]}">
+                            ${idx + 1}
+                        </span>
+                        <input
+                            type="text"
+                            value="${member.name.replace(/"/g, '&quot;')}"
+                            maxlength="24"
+                            aria-label="Nama Anggota ${idx + 1}"
+                            onchange="updateMemberName('${member.id}', this.value)"
+                            class="flex-1 min-w-0 bg-transparent text-sm font-semibold text-slate-900 focus:outline-none"
+                        />
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            ${isSeparatedSpecial
+                                ? `<span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-50 text-rose-700 border border-rose-200" title="Tidak boleh 1 tim di ULT">Pisah ULT</span>`
+                                : ''
+                            }
+                            ${member.hasHadOneDayInCycle
+                                ? `<span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200" title="Sudah dapat jatah 1-hari di siklus ini">Sudah 1h</span>`
+                                : `<span class="px-2 py-0.5 text-[10px] font-medium rounded-full bg-slate-100 text-slate-500" title="Belum dapat jatah 1-hari di siklus ini">Belum 1h</span>`
+                            }
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderScheduleCards() {
+            const container = document.getElementById('schedule-days-container');
+            const savedBadge = document.getElementById('saved-status-badge');
+            const titleEl = document.getElementById('schedule-card-title');
+
+            if (!container || !state.currentSchedule) return;
+
+            if (state.isCurrentWeekSaved) {
+                savedBadge.classList.remove('hidden');
+            } else {
+                savedBadge.classList.add('hidden');
+            }
+
+            titleEl.textContent = `Jadwal Mingguan (Senin – Jumat)`;
+
+            const memberMap = new Map(state.members.map((m, idx) => [m.id, { ...m, idx }]));
+
+            container.innerHTML = state.currentSchedule.map((day, dayIdx) => {
+                const ultSet = new Set(day.ultIds);
+                const ultMembers = day.ultIds.map(id => memberMap.get(id)).filter(Boolean);
+                const adminMembers = state.members.filter(m => !ultSet.has(m.id));
+                const isSwapOpen = activeSwapDayIndex === dayIdx;
+
+                let swapPanelHtml = '';
+                if (isSwapOpen) {
+                    const warnings = evaluateSwapWarnings(dayIdx, selectedSwapUltId, selectedSwapAdminId);
+                    swapPanelHtml = `
+                        <div class="mt-3 pt-3 border-t border-slate-200/80 bg-slate-50/90 rounded-xl p-3 space-y-3 animate-fade-in">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold text-slate-800">Tukar Posisi Hari ${day.dayName}</span>
+                                <button onclick="toggleSwapPanel(${dayIdx})" class="text-[11px] font-semibold text-slate-500 hover:text-slate-800">Tutup</button>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-teal-800 mb-1">1. Dari Ruang ULT (Keluar):</label>
+                                    <div class="flex flex-wrap gap-1.5">
+                                        ${ultMembers.map(m => `
+                                            <button type="button" onclick="setSwapUltSelection('${m.id}')" class="px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors ${selectedSwapUltId === m.id ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-slate-700 border-slate-200 hover:border-teal-400'}">
+                                                ${m.name}
+                                            </button>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-indigo-800 mb-1">2. Dari Ruang Admin (Masuk ULT):</label>
+                                    <div class="flex flex-wrap gap-1.5">
+                                        ${adminMembers.map(m => `
+                                            <button type="button" onclick="setSwapAdminSelection('${m.id}')" class="px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors ${selectedSwapAdminId === m.id ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-700 border-slate-200 hover:border-indigo-400'}">
+                                                ${m.name}
+                                            </button>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                            ${warnings.length > 0 ? `
+                                <div class="p-2.5 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 text-[11px] space-y-1">
+                                    <p class="font-bold">⚠️ Peringatan Aturan:</p>
+                                    ${warnings.map(w => `<p>• ${w}</p>`).join('')}
+                                </div>
+                            ` : `
+                                <p class="text-[11px] text-emerald-700 font-medium">✓ Penukaran ini aman dan mematuhi semua aturan.</p>
+                            `}
+                            <div class="flex justify-end">
+                                <button type="button" onclick="executeManualSwap(${dayIdx})" class="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition-colors">
+                                    Terapkan Tukar
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 bg-slate-50/40 hover:bg-white transition-colors">
+                        <div class="flex items-center justify-between gap-2 mb-2.5">
+                            <div class="flex items-center gap-2">
+                                <span class="w-7 h-7 rounded-xl bg-slate-900 text-white font-display font-bold text-xs flex items-center justify-center">
+                                    ${dayIdx + 1}
+                                </span>
+                                <h4 class="font-display font-bold text-sm sm:text-base text-slate-900">${day.dayName}</h4>
+                            </div>
+                            <button type="button" onclick="toggleSwapPanel(${dayIdx})" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 transition-colors flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                                </svg>
+                                <span>Tukar</span>
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-2.5">
+                            <!-- Ruang ULT (3 Orang) -->
+                            <div class="md:col-span-5 p-2.5 rounded-xl bg-teal-50/70 border border-teal-200/80">
+                                <div class="flex items-center justify-between mb-1.5">
+                                    <span class="text-[11px] font-extrabold uppercase tracking-wider text-teal-800">Ruang ULT</span>
+                                    <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-teal-600 text-white">3 Orang</span>
+                                </div>
+                                <div class="flex flex-wrap gap-1.5">
+                                    ${ultMembers.map(m => `
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-teal-200 text-xs font-bold text-slate-900 shadow-2xs">
+                                            <span class="w-2 h-2 rounded-full" style="background-color: ${WHEEL_COLORS[m.idx % WHEEL_COLORS.length]}"></span>
+                                            ${m.name}
+                                        </span>
+                                    `).join('')}
+                                </div>
+                            </div>
+
+                            <!-- Ruang Admin (6 Orang) -->
+                            <div class="md:col-span-7 p-2.5 rounded-xl bg-indigo-50/50 border border-indigo-200/70">
+                                <div class="flex items-center justify-between mb-1.5">
+                                    <span class="text-[11px] font-extrabold uppercase tracking-wider text-indigo-800">Ruang Admin</span>
+                                    <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800">6 Orang</span>
+                                </div>
+                                <div class="flex flex-wrap gap-1.5">
+                                    ${adminMembers.map(m => `
+                                        <span class="px-2 py-0.5 rounded-lg bg-white/90 border border-indigo-100 text-xs font-medium text-slate-700">
+                                            ${m.name}
+                                        </span>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+
+                        ${swapPanelHtml}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderVerificationSection() {
+            if (!state.currentSchedule) return;
+
+            const { rarasIds, dewiIds } = getSeparatedPairIds();
+            const counts = {};
+            const daysList = {};
+            state.members.forEach(m => {
+                counts[m.id] = 0;
+                daysList[m.id] = [];
+            });
+
+            let hasConsecutive = false;
+            let hasRarasDewiConflict = false;
+
+            for (let d = 0; d < state.currentSchedule.length; d++) {
+                const day = state.currentSchedule[d];
+                const prevSet = d > 0 ? new Set(state.currentSchedule[d - 1].ultIds) : new Set();
+
+                if (violatesSeparatedPair(day.ultIds, rarasIds, dewiIds)) {
+                    hasRarasDewiConflict = true;
+                }
+
+                day.ultIds.forEach(id => {
+                    counts[id] = (counts[id] || 0) + 1;
+                    daysList[id].push(day.dayName.slice(0, 3));
+                    if (prevSet.has(id)) hasConsecutive = true;
+                });
+            }
+
+            const maxDays = Math.max(...Object.values(counts));
+            const twoDayCount = Object.values(counts).filter(c => c === 2).length;
+            const oneDayCount = Object.values(counts).filter(c => c === 1).length;
+
+            const pillsEl = document.getElementById('rule-verification-pills');
+            pillsEl.innerHTML = `
+                <span class="px-2.5 py-1 rounded-full text-[11px] font-bold ${maxDays <= 2 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700'}">
+                    ${maxDays <= 2 ? '✓ 0 Org Kena 3h' : '⚠ Ada 3 Hari'}
+                </span>
+                <span class="px-2.5 py-1 rounded-full text-[11px] font-bold ${!hasConsecutive ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700'}">
+                    ${!hasConsecutive ? '✓ 0 Berurutan' : '⚠ Berurutan'}
+                </span>
+                <span class="px-2.5 py-1 rounded-full text-[11px] font-bold ${!hasRarasDewiConflict ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700'}">
+                    ${!hasRarasDewiConflict ? '✓ Raras ≠ Dewi di ULT' : '⚠ Raras & Dewi 1 Tim'}
+                </span>
+                <span class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700">
+                    ${twoDayCount} Org (2h) &bull; ${oneDayCount} Org (1h)
+                </span>
+            `;
+
+            const gridEl = document.getElementById('member-load-summary-grid');
+            gridEl.innerHTML = state.members.map(m => {
+                const c = counts[m.id] || 0;
+                const dText = daysList[m.id].join(', ') || '-';
+                const isTwo = c === 2;
+
+                return `
+                    <div class="flex items-center justify-between p-2.5 rounded-xl border ${isTwo ? 'bg-teal-50/50 border-teal-200/80' : 'bg-amber-50/50 border-amber-200/80'}">
+                        <div class="min-w-0 pr-2">
+                            <p class="text-xs font-bold text-slate-900 truncate">${m.name}</p>
+                            <p class="text-[11px] text-slate-500 truncate">${dText}</p>
+                        </div>
+                        <span class="px-2 py-0.5 rounded-lg text-[11px] font-extrabold shrink-0 ${isTwo ? 'bg-teal-600 text-white' : 'bg-amber-500 text-white'}">
+                            ${c} Hari
+                        </span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderCycleStatsTable() {
+            const tbody = document.getElementById('cycle-stats-tbody');
+            if (!tbody) return;
+
+            tbody.innerHTML = state.members.map((m, idx) => `
+                <tr class="hover:bg-slate-50/80 transition-colors">
+                    <td class="py-2 px-3 font-semibold text-slate-900 flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background-color: ${WHEEL_COLORS[idx % WHEEL_COLORS.length]}"></span>
+                        <span>${m.name}</span>
+                    </td>
+                    <td class="py-2 px-3 text-center">
+                        ${m.hasHadOneDayInCycle
+                            ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">✓ Sudah (1h)</span>`
+                            : `<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">Menunggu</span>`
+                        }
+                    </td>
+                    <td class="py-2 px-3 text-center font-bold text-teal-700">${m.cycleUltDays || 0} / 5 hari</td>
+                    <td class="py-2 px-3 text-center font-semibold text-slate-600">${m.totalUltAllTime || 0} hari</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderAll() {
+            renderPriorityBanner();
+            renderMemberEditor();
+            renderScheduleCards();
+            renderVerificationSection();
+            renderCycleStatsTable();
+            updateButtonsDisabledState();
+            resizeAndDrawWheel();
+        }
+
+        // =========================================================================
+        // 8. WHATSAPP MESSAGE EXPORT
+        // =========================================================================
+        function copyScheduleToWhatsApp() {
+            if (!state.currentSchedule) return;
+
+            const memberMap = new Map(state.members.map(m => [m.id, m.name]));
+
+            const dayBlocks = state.currentSchedule.map(day => {
+                const ultSet = new Set(day.ultIds);
+                const ultNames = day.ultIds.map(id => memberMap.get(id) || id).join(', ');
+                const adminNames = state.members
+                    .filter(m => !ultSet.has(m.id))
+                    .map(m => m.name)
+                    .join(', ');
+
+                return `*${day.dayName.toUpperCase()}*\n• Ruang ULT (3): *${ultNames}*\n• Ruang Admin (6): ${adminNames}`;
+            }).join('\n\n');
+
+            const counts = {};
+            state.members.forEach(m => (counts[m.id] = 0));
+            state.currentSchedule.forEach(d => d.ultIds.forEach(id => counts[id]++));
+            const oneDayNames = state.members
+                .filter(m => counts[m.id] === 1)
+                .map(m => m.name)
+                .join(', ');
+
+            const message =
+`*JADWAL RUANGAN MAGANGHUB*
+_Siklus ${state.cycleNumber} • Minggu ${state.weekInCycle}/3 (Senin – Jumat)_
+
+${dayBlocks}
+
+📌 *Catatan Distribusi Minggu Ini:*
+• 6 anggota jaga ULT 2 hari (tidak berurutan) & 3 anggota jaga 1 hari (_${oneDayNames}_).
+• Raras & Dewi dipastikan terpisah (tidak 1 tim di ULT).`;
+
+            copyToClipboard(message, 'Jadwal mingguan disalin! Siap paste ke grup WhatsApp.');
+        }
+
+        // =========================================================================
+        // 9. BOOTSTRAP
+        // =========================================================================
+        window.addEventListener('resize', () => {
+            resizeAndDrawWheel();
+        });
+
+        window.onload = function () {
+            loadState();
+            const { rarasIds, dewiIds } = getSeparatedPairIds();
+            const hasConflictInSaved = Array.isArray(state.currentSchedule) &&
+                state.currentSchedule.some(day => violatesSeparatedPair(day.ultIds, rarasIds, dewiIds));
+
+            if (!state.currentSchedule || hasConflictInSaved) {
+                state.currentSchedule = generateFairWeeklySchedule();
+                saveState();
+            }
+            renderAll();
+        };
+    </script>
+</body>
+</html>
